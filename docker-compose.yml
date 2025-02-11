@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.1.3-java8
+    container_name: namenode
+    environment:
+      - CLUSTER_NAME=my-hadoop-cluster
+      - HDFS_NAMENODE_USER=root
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    ports:
+      - "9870:9870" # Use new UI port instead of 50070
+      - "9000:9000" # Alternative RPC port for NameNode
+    volumes:
+      - hdfs_namenode_data:/hadoop/dfs/name
+      - ./jars:/jars
+      - ./data:/data
+    networks:
+      - spark_network
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.1.3-java8
+    container_name: datanode
+    environment:
+      - CLUSTER_NAME=my-hadoop-cluster
+      - HDFS_DATANODE_USER=root
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
+    ports:
+      - "9864:9864" # Use new DataNode UI instead of 50075
+      - "9866:9866" # Data transfer port
+    volumes:
+      - hdfs_datanode_data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+    networks:
+      - spark_network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: airbnb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - spark_network
+
+  airflow:
+    image: apache/airflow:2.5.1
+    container_name: airflow
+    restart: always
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://user:password@postgres-db/airbnb
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./dags:/opt/airflow/dags
+    networks:
+      - spark_network
+    depends_on:
+      - postgres
+    entrypoint: [ "/bin/bash", "-c", " airflow db init && airflow users create --username admin --password admin --firstname Yash --lastname Admin --role Admin --email yash@example.com && airflow webserver & airflow scheduler " ]
+
+  spark-master:
+    container_name: spark-master-node
+    build: .
+    image: spark-image-local
+    entrypoint: [ './entrypoint.sh', 'master' ]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - spark_logs:/opt/spark/spark-events
+      - ./scripts:/opt/spark/app/scripts
+      - ./data:/opt/spark/app/data
+      - ./config:/opt/spark/app/config
+      - ./jars:/opt/spark/app/jars
+    networks:
+      - spark_network
+    env_file:
+      - .env.spark
+    ports:
+      - '9090:8080'
+      - '7077:7077'
+    working_dir: /opt/spark
+
+  spark-history-server:
+    container_name: spark-history-node
+    image: spark-image-local
+    entrypoint: [ './entrypoint.sh', 'history' ]
+    depends_on:
+      - spark-master
+    env_file:
+      - .env.spark
+    volumes:
+      - spark_logs:/opt/spark/spark-events
+    networks:
+      - spark_network
+    ports:
+      - '18080:18080'
+
+  spark-worker:
+    container_name: spark-worker-node
+    image: spark-image-local
+    entrypoint: [ './entrypoint.sh', 'worker' ]
+    depends_on:
+      - spark-master
+    env_file:
+      - .env.spark
+    volumes:
+      - spark_logs:/opt/spark/spark-events
+    networks:
+      - spark_network
+
+volumes:
+  spark_logs:
+  postgres_data:
+  hdfs_namenode_data:
+  hdfs_datanode_data:
+
+
+networks:
+  spark_network:
+
+
