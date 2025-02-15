@@ -8,6 +8,7 @@ from config.spark_config import get_spark_session
 
 spark = get_spark_session()
 
+
 # Extract (Load data into pyspark dataframe)
 
 airbnb_listing_df = spark.read\

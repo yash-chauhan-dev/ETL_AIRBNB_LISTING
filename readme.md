@@ -44,9 +44,14 @@ Ensure you have the following installed:
    ```bash
    docker-compose up -d
    ```
-3. Submit the ETL job to Spark:
+3. Copy file to spark master
    ```bash
-   spark-submit scripts/etl.py
+   docker cp ./scripts <container>:/opt/spark/app/
+   docker cp ./config <container>:/opt/spark/app/
+   ```
+4. Submit the ETL job to Spark:
+   ```bash
+   docker exec -it <container> spark-submit /opt/spark/app/scripts/etl.py
    ```
 
 ## Issues Faced & Solutions
@@ -54,11 +59,6 @@ Ensure you have the following installed:
 **Problem:** When submitting the Spark job to the cluster, the worker nodes couldn’t access the data directory mounted on the master node.
 
 **Solution:** Used HDFS to store data, ensuring both master and worker nodes have access.
-
-### Issue: Missing JAR Files in Worker Nodes
-**Problem:** JAR files required for saving data to PostgreSQL were only mounted on the master node, making them inaccessible to worker nodes.
-
-**Solution:** Loaded JAR files into HDFS and provided the correct HDFS path in the Spark job.
 
 ## Future Enhancements
 - Automate the ETL pipeline with Airflow scheduling.
