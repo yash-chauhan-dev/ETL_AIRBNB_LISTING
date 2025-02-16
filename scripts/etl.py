@@ -15,7 +15,7 @@ airbnb_listing_df = spark.read\
     .format('csv')\
     .options(header=True)\
     .options(inferSchema=True)\
-    .load("hdfs://namenode:8020/user/hadoop/input/listings_aus.csv")
+    .load("hdfs://namenode:8020/user_data/listings_aus.csv")
 
 # Transform (Transform data based on the requirrements)
 

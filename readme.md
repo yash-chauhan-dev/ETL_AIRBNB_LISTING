@@ -46,12 +46,19 @@ Ensure you have the following installed:
    ```
 3. Copy file to spark master
    ```bash
-   docker cp ./scripts <container>:/opt/spark/app/
-   docker cp ./config <container>:/opt/spark/app/
+   docker cp ./scripts <spark_master_container>:/opt/spark/app/
+   docker cp ./config <sparrk_master_container>:/opt/spark/app/
+   ```
+
+4. Put the data into HDFS (For now consider it as a storage accessable by all spark nodes)
+   ```bash
+   docker cp ./data <namenode_container>:./
+   hadoop exec -it <namenode_container> hadoop fs -mkdir /user_data
+   docker exec -it <namenode_container> hadoop fs -put ./data/* /user_data/
    ```
 4. Submit the ETL job to Spark:
    ```bash
-   docker exec -it <container> spark-submit /opt/spark/app/scripts/etl.py
+   docker exec -it <spark_master_container> spark-submit /opt/spark/app/scripts/etl.py
    ```
 
 ## Issues Faced & Solutions
