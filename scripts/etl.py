@@ -24,7 +24,7 @@ airbnb_listing_df = spark.read\
 req_df = airbnb_listing_df.select(
     'id',
     'name',
-    col('host_id').cast('double'),
+    col('host_id').cast('integer'),
     'host_name',
     col('neighbourhood_cleansed').alias('neighbourhood'),
     'room_type',
@@ -36,7 +36,7 @@ req_df = airbnb_listing_df.select(
 price_transformed = req_df.withColumn(
     'price', split(
         col('price'), '\\$'
-    ).getItem(1).cast('double')
+    ).getItem(1).cast('numeric')
 )
 
 """ once we get the required data, now we will drop the null values from the dataframe """
