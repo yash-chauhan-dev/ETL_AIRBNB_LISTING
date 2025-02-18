@@ -2,6 +2,8 @@
 
 ![alt text](etl_airbnb_listings.jpg)
 
+(LINK) [Youtube Tutorial to understand this project](https://youtu.be/-4YADNVYqJk?si=k8-tYNMNBXu94yhr)
+
 ## Overview
 This project aims to build an ETL pipeline to transform raw Airbnb listings data into a structured format for price and availability analysis. The raw data is often messy, contains missing values, and is inefficient for querying business insights. 
 
